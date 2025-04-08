@@ -1,5 +1,5 @@
 streamlit
 notion-client
-fuzzywuzzy
-python-Levenshtein
+sentence-transformers
 pandas
+torch
