@@ -5,8 +5,21 @@ import pandas as pd
 import os
 
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
-AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"  # 固定の参照元DB
+AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"
 RELATION_PROP_NAME = "AZS DB"
+
+# -------------------------------
+# ✅ モデルの自動ダウンロード＋キャッシュ読み込み
+# -------------------------------
+MODEL_NAME = 'paraphrase-MiniLM-L6-v2'
+MODEL_DIR = './.cache_model'
+
+if not os.path.exists(MODEL_DIR):
+    st.info("🤖 モデルを初回ダウンロード中です。少しお待ちください...")
+    model = SentenceTransformer(MODEL_NAME)
+    model.save(MODEL_DIR)
+else:
+    model = SentenceTransformer(MODEL_DIR)
 
 # -------------------------------
 # 🔧 関数：URLからDB IDを抽出
@@ -18,7 +31,7 @@ def extract_db_id(notion_url):
         return None
 
 # -------------------------------
-# 🔧 関数：全ページ取得（100件以上対応）
+# 🔧 関数：100件以上取得対応
 # -------------------------------
 def get_database_items(notion, db_id):
     results = []
@@ -40,11 +53,10 @@ def get_database_items(notion, db_id):
     return results
 
 # -------------------------------
-# 🔧 関数：AIマッチング処理
+# 🔧 関数：マッチング実行
 # -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
-    model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
     azs_items = get_database_items(notion, AZS_DB_ID)
     PJ_items = get_database_items(notion, PJ_DB_ID)
