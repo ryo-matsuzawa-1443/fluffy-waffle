@@ -9,7 +9,7 @@ import urllib.request
 # -------------------------------
 # ✅ DropboxからモデルDL＆展開
 # -------------------------------
-ZIP_URL = "https://www.dropbox.com/scl/fi/y6vuw1w07iaykjz8x3bap/my_model.zip?rlkey=vdkmpp4586n9cch9509jdtmgx&st=x5qdh7cc&dl=1"
+ZIP_URL = "https://www.dropbox.com/scl/fi/t0ybe1e7tkj2zgdcv5t8m/my_model.zip?rlkey=uz17vft97vtfo0y62sw4kmi5u&st=1nol8zi1&dl=1"
 ZIP_PATH = "my_model.zip"
 MODEL_DIR = "./my_model"
 
