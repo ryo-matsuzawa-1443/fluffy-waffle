@@ -44,7 +44,7 @@ def get_database_items(notion, db_id):
 # -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
     azs_items = get_database_items(notion, AZS_DB_ID)
     PJ_items = get_database_items(notion, PJ_DB_ID)
