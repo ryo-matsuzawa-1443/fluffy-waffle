@@ -50,8 +50,7 @@ def run_matching(PJ_DB_ID, threshold):
             PJ_names.append(text)
             PJ_pages[text] = item["id"]
 
-    approved_matches = []
-    pending_matches = []
+    matches = []
 
     for PJ_name in PJ_names:
         best_match, score = process.extractOne(PJ_name, azs_names)
@@ -61,69 +60,40 @@ def run_matching(PJ_DB_ID, threshold):
             "類似度": score,
             "AZSページID": azs_pages[best_match],
             "検証ページID": PJ_pages[PJ_name],
+            "ステータス": "マッチ" if score >= threshold else "保留"
         }
 
+        matches.append(match_info)
+
+        # マッチした場合はNotionのリレーションを更新
         if score >= threshold:
-            approved_matches.append(match_info)
-        else:
-            pending_matches.append(match_info)
+            notion.pages.update(
+                page_id=match_info["検証ページID"],
+                properties={RELATION_PROP_NAME: {
+                    "relation": [{"id": match_info["AZSページID"]}]
+                }}
+            )
 
-    for match in approved_matches:
-        notion.pages.update(
-            page_id=match["検証ページID"],
-            properties={RELATION_PROP_NAME: {
-                "relation": [{"id": match["AZSページID"]}]
-            }}
-        )
-        st.write(f'✔️ {match["室名"]} → {match["マッチした部屋名"]}（スコア: {match["類似度"]}）')
+    # 結果をまとめてCSVとして出力
+    df_matches = pd.DataFrame(matches)
+    df_matches.to_csv("matching_results.csv", index=False, encoding='utf-8-sig')
 
-    df_pending = pd.DataFrame(pending_matches)
-    df_pending.to_csv("pending_matches.csv", index=False, encoding='utf-8-sig')
-
-    df_approved = pd.DataFrame(approved_matches)
-    df_approved.to_csv("approved_matches.csv", index=False, encoding='utf-8-sig')
-
-    if pending_matches:
-        st.warning("⚠️ 類似度が低く保留された室名あり（保留マッチングCSV を確認）")
+    # ステータスによって異なるメッセージを表示
+    if any(match["ステータス"] == "保留" for match in matches):
+        st.warning("⚠️ 類似度が低く保留された室名あり（matching_results.csv を確認）")
     else:
         st.success("🎉 すべての室名が自動マッチされました！")
 
-    with open("approved_matches.csv", "rb") as f:
+    # ✅ ダウンロードボタン
+    with open("matching_results.csv", "rb") as f:
         st.download_button(
-            label="📥 承認済みマッチングCSVをダウンロード",
+            label="📥 マッチング結果CSVをダウンロード",
             data=f,
-            file_name="approved_matches.csv",
-            mime="text/csv"
-        )
-
-    with open("pending_matches.csv", "rb") as f:
-        st.download_button(
-            label="📥 保留マッチングCSVをダウンロード",
-            data=f,
-            file_name="pending_matches.csv",
+            file_name="matching_results.csv",
             mime="text/csv"
         )
 
 # -------------------------------
 # 🖼️ Streamlit UI部分
 # -------------------------------
-st.title("🏗️ Notion 室名自動マッチングツール")
-
-url = st.text_input("🔗 PJデータベースのURLを入力してください")
-
-# 🧪 スライダー追加（URLの下に配置）
-threshold = st.slider(
-    "📊 類似度のしきい値（この値以上をマッチング対象とします）",
-    min_value=0,
-    max_value=100,
-    value=70,
-    step=1,
-)
-
-if st.button("🚀 マッチング実行"):
-    db_id = extract_db_id(url)
-    if db_id:
-        st.info(f"✅ DB ID 取得: {db_id}")
-        run_matching(db_id, threshold)
-    else:
-        st.error("❌ 無効なURL形式です。NotionのデータベースURLを確認してください。")
+st.title("🏗️ Notion 室名自動マ
