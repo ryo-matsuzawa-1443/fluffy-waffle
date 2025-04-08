@@ -22,7 +22,7 @@ def extract_db_id(notion_url):
 # -------------------------------
 # 🔧 関数：マッチング処理
 # -------------------------------
-def run_matching(KENSYO_DB_ID):
+def run_matching(PJ_DB_ID):
     notion = Client(auth=NOTION_TOKEN)
 
     def get_database_items(db_id):
@@ -32,7 +32,7 @@ def run_matching(KENSYO_DB_ID):
         return results
 
     azs_items = get_database_items(AZS_DB_ID)
-    kensyo_items = get_database_items(KENSYO_DB_ID)
+    PJ_items = get_database_items(PJ_DB_ID)
 
     azs_names = []
     azs_pages = {}
@@ -43,26 +43,26 @@ def run_matching(KENSYO_DB_ID):
             azs_names.append(text)
             azs_pages[text] = item["id"]
 
-    kensyo_names = []
-    kensyo_pages = {}
-    for item in kensyo_items:
+    PJ_names = []
+    PJ_pages = {}
+    for item in PJ_items:
         name = item["properties"].get("室名", {}).get("title", [])
         if name:
             text = name[0]["text"]["content"]
-            kensyo_names.append(text)
-            kensyo_pages[text] = item["id"]
+            PJ_names.append(text)
+            PJ_pages[text] = item["id"]
 
     approved_matches = []
     pending_matches = []
 
-    for kensyo_name in kensyo_names:
-        best_match, score = process.extractOne(kensyo_name, azs_names)
+    for PJ_name in PJ_names:
+        best_match, score = process.extractOne(PJ_name, azs_names)
         match_info = {
-            "室名": kensyo_name,
+            "室名": PJ_name,
             "マッチした部屋名": best_match,
             "類似度": score,
             "AZSページID": azs_pages[best_match],
-            "検証ページID": kensyo_pages[kensyo_name],
+            "検証ページID": PJ_pages[PJ_name],
         }
 
         if score >= threshold:
@@ -112,7 +112,7 @@ def run_matching(KENSYO_DB_ID):
 # -------------------------------
 st.title("🏗️ Notion 自動マッチングツール")
 
-url = st.text_input("🔗 KENSYOデータベースのURLを入力してください")
+url = st.text_input("🔗 PJデータベースのURLを入力してください")
 
 if st.button("🚀 マッチング実行"):
     db_id = extract_db_id(url)
