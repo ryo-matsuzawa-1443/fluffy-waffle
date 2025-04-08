@@ -56,9 +56,7 @@ def run_matching(PJ_DB_ID, threshold):
     approved_matches = []
     pending_matches = []
 
-    total = len(PJ_names)
-    for index, PJ_name in enumerate(PJ_names):
-        st.write(f"マッチング中: {index + 1}/{total} ({(index + 1) / total * 100:.2f}%)")  # 進行状況を表示
+    for PJ_name in PJ_names:
         best_match, score = process.extractOne(PJ_name, azs_names)
         match_info = {
             "室名": PJ_name,
