@@ -1,61 +1,39 @@
 import streamlit as st
 from notion_client import Client
-from sentence_transformers import SentenceTransformer, util
+from fuzzywuzzy import process
 import pandas as pd
 import os
-import zipfile
-import urllib.request
 
-# -------------------------------
-# ✅ DropboxからモデルDL＆展開（確実版）
-# -------------------------------
-ZIP_URL = "https://www.dropbox.com/scl/fi/zr8y75dv3m98op9cnsft2/correct_my_model.zip?rlkey=hbgwu2cfao1peh9aoax9igkp6&st=k2j78s69&dl=1"
-ZIP_PATH = "my_model_dropbox.zip"  # 🔥 GitHubと重複しない名前に変更！
-MODEL_DIR = "./my_model"
-
-if not os.path.exists(MODEL_DIR):
-    st.info("🤖 DropboxからAIモデルを取得中です。少しお待ちください...")
-    urllib.request.urlretrieve(ZIP_URL, ZIP_PATH)
-    with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
-        zip_ref.extractall(".")
-        os.rename("correct_my_model", MODEL_DIR)  # 🔥 フォルダ名修正を確認！
-
-model = SentenceTransformer(MODEL_DIR)
-
-# -------------------------------
-# ✅ Notion設定
-# -------------------------------
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
-AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"
+AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"  # 固定の参照元DB
 RELATION_PROP_NAME = "AZS DB"
 
+# -------------------------------
+# 🔧 関数：URLからDB IDを抽出
+# -------------------------------
 def extract_db_id(notion_url):
     try:
         return notion_url.split("/")[-1].split("?")[0]
     except:
         return None
 
-def get_database_items(notion, db_id):
-    results = []
-    next_cursor = None
-    while True:
-        response = notion.databases.query(
-            database_id=db_id,
-            start_cursor=next_cursor
-        ) if next_cursor else notion.databases.query(database_id=db_id)
-        results.extend(response["results"])
-        if response.get("has_more"):
-            next_cursor = response["next_cursor"]
-        else:
-            break
-    return results
-
+# -------------------------------
+# 🔧 関数：マッチング処理（threshold を引数に追加）
+# -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
-    azs_items = get_database_items(notion, AZS_DB_ID)
-    PJ_items = get_database_items(notion, PJ_DB_ID)
 
-    azs_names, azs_pages = [], {}
+    def get_database_items(db_id):
+        results = []
+        response = notion.databases.query(database_id=db_id)
+        results.extend(response["results"])
+        return results
+
+    azs_items = get_database_items(AZS_DB_ID)
+    PJ_items = get_database_items(PJ_DB_ID)
+
+    azs_names = []
+    azs_pages = {}
     for item in azs_items:
         name = item["properties"].get("部屋名", {}).get("title", [])
         if name:
@@ -63,7 +41,8 @@ def run_matching(PJ_DB_ID, threshold):
             azs_names.append(text)
             azs_pages[text] = item["id"]
 
-    PJ_names, PJ_pages = [], {}
+    PJ_names = []
+    PJ_pages = {}
     for item in PJ_items:
         name = item["properties"].get("室名", {}).get("title", [])
         if name:
@@ -71,26 +50,20 @@ def run_matching(PJ_DB_ID, threshold):
             PJ_names.append(text)
             PJ_pages[text] = item["id"]
 
-    azs_embeddings = model.encode(azs_names, convert_to_tensor=True)
-    pj_embeddings = model.encode(PJ_names, convert_to_tensor=True)
-    cosine_scores = util.pytorch_cos_sim(pj_embeddings, azs_embeddings)
+    approved_matches = []
+    pending_matches = []
 
-    approved_matches, pending_matches = [], []
-    for i, PJ_name in enumerate(PJ_names):
-        score_row = cosine_scores[i]
-        best_index = int(score_row.argmax())
-        best_score = float(score_row[best_index])
-        best_match = azs_names[best_index]
-
+    for PJ_name in PJ_names:
+        best_match, score = process.extractOne(PJ_name, azs_names)
         match_info = {
             "室名": PJ_name,
             "マッチした部屋名": best_match,
-            "類似度": int(best_score * 100),
+            "類似度": score,
             "AZSページID": azs_pages[best_match],
             "検証ページID": PJ_pages[PJ_name],
         }
 
-        if match_info["類似度"] >= threshold:
+        if score >= threshold:
             approved_matches.append(match_info)
         else:
             pending_matches.append(match_info)
@@ -105,14 +78,13 @@ def run_matching(PJ_DB_ID, threshold):
         st.write(f'✔️ {match["室名"]} → {match["マッチした部屋名"]}（スコア: {match["類似度"]}）')
 
     df_pending = pd.DataFrame(pending_matches)
-    df_approved = pd.DataFrame(approved_matches)
-
     df_pending.to_csv("pending_matches.csv", index=False, encoding='utf-8-sig')
+
+    df_approved = pd.DataFrame(approved_matches)
     df_approved.to_csv("approved_matches.csv", index=False, encoding='utf-8-sig')
 
     if pending_matches:
         st.warning("⚠️ 類似度が低く保留された室名あり（保留マッチングCSV を確認）")
-        st.dataframe(df_pending)
     else:
         st.success("🎉 すべての室名が自動マッチされました！")
 
@@ -133,12 +105,13 @@ def run_matching(PJ_DB_ID, threshold):
         )
 
 # -------------------------------
-# 🖼️ Streamlit UI
+# 🖼️ Streamlit UI部分
 # -------------------------------
-st.title("🏗️ Notion 室名AIマッチングツール")
+st.title("🏗️ Notion 室名自動マッチングツール")
 
 url = st.text_input("🔗 PJデータベースのURLを入力してください")
 
+# 🧪 スライダー追加（URLの下に配置）
 threshold = st.slider(
     "📊 類似度のしきい値（この値以上をマッチング対象とします）",
     min_value=0,
