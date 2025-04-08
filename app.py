@@ -3,12 +3,10 @@ from notion_client import Client
 from fuzzywuzzy import process
 import pandas as pd
 import os
+
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
-
-
 AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"  # 固定の参照元DB
 RELATION_PROP_NAME = "AZS DB"
-threshold = 70
 
 # -------------------------------
 # 🔧 関数：URLからDB IDを抽出
@@ -20,9 +18,9 @@ def extract_db_id(notion_url):
         return None
 
 # -------------------------------
-# 🔧 関数：マッチング処理
+# 🔧 関数：マッチング処理（threshold を引数に追加）
 # -------------------------------
-def run_matching(PJ_DB_ID):
+def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
 
     def get_database_items(db_id):
@@ -88,9 +86,8 @@ def run_matching(PJ_DB_ID):
     if pending_matches:
         st.warning("⚠️ 類似度が低く保留された室名あり（pending_matches.csv を確認）")
     else:
-       st.success("🎉 すべての室名が自動マッチされました！")
+        st.success("🎉 すべての室名が自動マッチされました！")
 
-    # ✅ ダウンロードボタン
     with open("approved_matches.csv", "rb") as f:
         st.download_button(
             label="📥 承認済みマッチングCSVをダウンロード",
@@ -112,12 +109,15 @@ def run_matching(PJ_DB_ID):
 # -------------------------------
 st.title("🏗️ Notion 自動マッチングツール")
 
+# ✅ スライダーでしきい値を調整できるように！
+threshold = st.slider("🎚 類似度スコアのしきい値", min_value=0, max_value=100, value=70, step=1)
+
 url = st.text_input("🔗 PJデータベースのURLを入力してください")
 
 if st.button("🚀 マッチング実行"):
     db_id = extract_db_id(url)
     if db_id:
         st.info(f"✅ DB ID 取得: {db_id}")
-        run_matching(db_id)
+        run_matching(db_id, threshold)  # ← しきい値も渡す
     else:
-        st.error("❌ 無効なURL形式です。NotionのデータベースURLを確認してください。")
+        st.error("❌ 無効なURL形式
