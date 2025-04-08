@@ -84,7 +84,7 @@ def run_matching(PJ_DB_ID, threshold):
     df_approved.to_csv("approved_matches.csv", index=False, encoding='utf-8-sig')
 
     if pending_matches:
-        st.warning("⚠️ 類似度が低く保留された室名あり（pending_matches.csv を確認）")
+        st.warning("⚠️ 類似度が低く保留された室名あり（保留マッチングCSV を確認）")
     else:
         st.success("🎉 すべての室名が自動マッチされました！")
 
