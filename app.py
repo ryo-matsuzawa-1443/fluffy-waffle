@@ -22,8 +22,20 @@ def extract_db_id(notion_url):
 # -------------------------------
 def get_database_items(db_id):
     results = []
-    response = client.databases.query(database_id=db_id)
-    results.extend(response["results"])
+    try:
+        # APIクエリ
+        response = notion.databases.query(database_id=db_id)
+        results.extend(response["results"])
+
+        # ページネーション
+        while "next_cursor" in response:
+            response = notion.databases.query(
+                database_id=db_id,
+                start_cursor=response["next_cursor"]
+            )
+            results.extend(response["results"])
+    except Exception as e:
+        st.error(f"エラーが発生しました: {e}")
 
     # ページネーションを考慮して全てのデータを取得
     while "next_cursor" in response:
