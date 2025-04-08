@@ -3,8 +3,7 @@
 __pycache__/
 
 # Output CSV
-approved_matches.csv
-pending_matches.csv
+matching_results.csv
 
 # Secrets
 secrets.toml
