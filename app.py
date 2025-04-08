@@ -18,39 +18,20 @@ def extract_db_id(notion_url):
         return None
 
 # -------------------------------
-# 🔧 ページネーションでデータを取得
-# -------------------------------
-def get_database_items(db_id):
-    results = []
-    try:
-        notion = Client(auth=NOTION_TOKEN)  # notionクライアントの定義をここに移動
-        response = notion.databases.query(database_id=db_id)
-        results.extend(response["results"])
-
-        st.write(f"Initial data fetched: {len(results)} items")
-
-        # ページネーション
-        while "next_cursor" in response:
-            st.write(f"Fetching next page... {response['next_cursor']}")
-            response = notion.databases.query(
-                database_id=db_id,
-                start_cursor=response["next_cursor"]
-            )
-            results.extend(response["results"])
-
-    except Exception as e:
-        st.error(f"エラーが発生しました: {e}")
-        st.write("データベースのURLや接続に問題があるかもしれません。再度確認してください。")
-
-    return results
-
-# -------------------------------
 # 🔧 関数：マッチング処理（threshold を引数に追加）
 # -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
 
-    # データベースアイテムをページネーションで取得
+    def get_database_items(db_id):
+        results = []
+        response = notion.databases.query(database_id=db_id)
+        results.extend(response["results"])
+        return results
+
+    # ユーザーに進行中のメッセージを表示
+    st.write("データベースからアイテムを取得中...")
+    
     azs_items = get_database_items(AZS_DB_ID)
     PJ_items = get_database_items(PJ_DB_ID)
 
@@ -99,7 +80,7 @@ def run_matching(PJ_DB_ID, threshold):
                     "relation": [{"id": match_info["AZSページID"]}]
                 }}
             )
-
+        
         # リアルタイムでマッチング結果を表示
         if score >= threshold:
             st.write(f'✔️ {match_info["室名"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
