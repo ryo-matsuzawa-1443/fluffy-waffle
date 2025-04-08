@@ -23,29 +23,11 @@ def extract_db_id(notion_url):
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
 
-def get_database_items(notion, db_id):
-    results = []
-    try:
-        # 初期リクエスト
+    def get_database_items(db_id):
+        results = []
         response = notion.databases.query(database_id=db_id)
         results.extend(response["results"])
-
-        st.write(f"Initial data fetched: {len(results)} items")
-
-        # ページネーション
-        while "next_cursor" in response:
-            st.write(f"Fetching next page... {response['next_cursor']}")
-            response = notion.databases.query(
-                database_id=db_id,
-                start_cursor=response["next_cursor"]
-            )
-            results.extend(response["results"])
-
-    except Exception as e:
-        st.error(f"エラーが発生しました: {e}")
-        st.write("データベースのURLや接続に問題があるかもしれません。再度確認してください。")
-
-    return results
+        return results
 
     # ユーザーに進行中のメッセージを表示
     st.write("データベースからアイテムを取得中...")
