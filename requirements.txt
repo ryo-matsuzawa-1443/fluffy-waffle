@@ -2,4 +2,4 @@ streamlit
 notion-client
 sentence-transformers
 pandas
-torch
+torch==1.13.1
