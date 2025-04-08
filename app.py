@@ -7,7 +7,7 @@ import zipfile
 import urllib.request
 
 # -------------------------------
-# ✅ DropboxからモデルDL＆展開
+# ✅ DropboxからモデルDL＆展開（修正版！）
 # -------------------------------
 ZIP_URL = "https://www.dropbox.com/scl/fi/zr8y75dv3m98op9cnsft2/correct_my_model.zip?rlkey=hbgwu2cfao1peh9aoax9igkp6&st=k2j78s69&dl=1"
 ZIP_PATH = "my_model.zip"
@@ -17,7 +17,9 @@ if not os.path.exists(MODEL_DIR):
     st.info("🤖 DropboxからAIモデルを取得中です。少しお待ちください...")
     urllib.request.urlretrieve(ZIP_URL, ZIP_PATH)
     with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
-        zip_ref.extractall(MODEL_DIR)
+        # 🔥 ZIPファイル内のフォルダ名を考慮し展開
+        zip_ref.extractall(".")
+        os.rename("correct_my_model", MODEL_DIR)  # フォルダ名修正がポイント🔥
 
 model = SentenceTransformer(MODEL_DIR)
 
