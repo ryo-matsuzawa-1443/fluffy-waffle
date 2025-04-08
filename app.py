@@ -109,15 +109,21 @@ def run_matching(PJ_DB_ID, threshold):
 # -------------------------------
 st.title("🏗️ Notion 自動マッチングツール")
 
-# ✅ スライダーでしきい値を調整できるように！
-threshold = st.slider("🎚 類似度スコアのしきい値", min_value=0, max_value=100, value=70, step=1)
-
 url = st.text_input("🔗 PJデータベースのURLを入力してください")
+
+# 🧪 スライダー追加（URLの下に配置）
+threshold = st.slider(
+    "📊 類似度のしきい値（この値以上をマッチング対象とします）",
+    min_value=0,
+    max_value=100,
+    value=70,
+    step=1,
+)
 
 if st.button("🚀 マッチング実行"):
     db_id = extract_db_id(url)
     if db_id:
         st.info(f"✅ DB ID 取得: {db_id}")
-        run_matching(db_id, threshold)  # ← しきい値も渡す
+        run_matching(db_id, threshold)
     else:
         st.error("❌ 無効なURL形式です。NotionのデータベースURLを確認してください。")
