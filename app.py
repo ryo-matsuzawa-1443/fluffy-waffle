@@ -7,9 +7,9 @@ import zipfile
 import urllib.request
 
 # -------------------------------
-# 🔧 Dropboxからモデルを取得＆展開
+# ✅ DropboxからモデルDL＆展開
 # -------------------------------
-ZIP_URL = "https://www.dropbox.com/scl/fi/izbgbhfai3w9lf9seypre/my_model.zip?rlkey=3w8l307p4xuz1c3oqbcnfxnm8&st=ookby7ig&dl=1"
+ZIP_URL = "https://www.dropbox.com/scl/fi/pyyf5a84o5f2a7la0yo6f/my_model.zip?rlkey=ouf19dk7m6fndu0f0wdqdlm58&st=8o7byvxq&dl=1"
 ZIP_PATH = "my_model.zip"
 MODEL_DIR = "./my_model"
 
@@ -22,14 +22,12 @@ if not os.path.exists(MODEL_DIR):
 model = SentenceTransformer(MODEL_DIR)
 
 # -------------------------------
-# 🔧 Notionトークンと設定
+# ✅ Notion設定
 # -------------------------------
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
 AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"
 RELATION_PROP_NAME = "AZS DB"
 
-# -------------------------------
-# 🔧 DB ID 抽出関数
 # -------------------------------
 def extract_db_id(notion_url):
     try:
@@ -37,31 +35,21 @@ def extract_db_id(notion_url):
     except:
         return None
 
-# -------------------------------
-# 🔧 全ページ取得関数（100件以上対応）
-# -------------------------------
 def get_database_items(notion, db_id):
     results = []
     next_cursor = None
-
     while True:
         response = notion.databases.query(
             database_id=db_id,
             start_cursor=next_cursor
         ) if next_cursor else notion.databases.query(database_id=db_id)
-
         results.extend(response["results"])
-
         if response.get("has_more"):
             next_cursor = response["next_cursor"]
         else:
             break
-
     return results
 
-# -------------------------------
-# 🔧 マッチング処理
-# -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
 
@@ -86,12 +74,9 @@ def run_matching(PJ_DB_ID, threshold):
 
     azs_embeddings = model.encode(azs_names, convert_to_tensor=True)
     pj_embeddings = model.encode(PJ_names, convert_to_tensor=True)
-
     cosine_scores = util.pytorch_cos_sim(pj_embeddings, azs_embeddings)
 
-    approved_matches = []
-    pending_matches = []
-
+    approved_matches, pending_matches = [], []
     for i, PJ_name in enumerate(PJ_names):
         score_row = cosine_scores[i]
         best_index = int(score_row.argmax())
