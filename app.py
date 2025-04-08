@@ -34,8 +34,10 @@ def get_database_items(db_id):
                 start_cursor=response["next_cursor"]
             )
             results.extend(response["results"])
+
     except Exception as e:
         st.error(f"エラーが発生しました: {e}")
+        st.write("データベースのURLや接続に問題があるかもしれません。再度確認してください。")
 
     # ページネーションを考慮して全てのデータを取得
     while "next_cursor" in response:
