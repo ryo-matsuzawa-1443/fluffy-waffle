@@ -29,6 +29,9 @@ def run_matching(PJ_DB_ID, threshold):
         results.extend(response["results"])
         return results
 
+    # ユーザーに進行中のメッセージを表示
+    st.write("データベースからアイテムを取得中...")
+    
     azs_items = get_database_items(AZS_DB_ID)
     PJ_items = get_database_items(PJ_DB_ID)
 
@@ -50,9 +53,12 @@ def run_matching(PJ_DB_ID, threshold):
             PJ_names.append(text)
             PJ_pages[text] = item["id"]
 
-    matches = []
+    approved_matches = []
+    pending_matches = []
 
-    for PJ_name in PJ_names:
+    total = len(PJ_names)
+    for index, PJ_name in enumerate(PJ_names):
+        st.write(f"マッチング中: {index + 1}/{total} ({(index + 1) / total * 100:.2f}%)")  # 進行状況を表示
         best_match, score = process.extractOne(PJ_name, azs_names)
         match_info = {
             "室名": PJ_name,
@@ -63,7 +69,10 @@ def run_matching(PJ_DB_ID, threshold):
             "ステータス": "マッチ" if score >= threshold else "保留"
         }
 
-        matches.append(match_info)
+        if score >= threshold:
+            approved_matches.append(match_info)
+        else:
+            pending_matches.append(match_info)
 
         # マッチした場合はNotionのリレーションを更新
         if score >= threshold:
@@ -73,13 +82,19 @@ def run_matching(PJ_DB_ID, threshold):
                     "relation": [{"id": match_info["AZSページID"]}]
                 }}
             )
+        
+        # リアルタイムでマッチング結果を表示
+        if score >= threshold:
+            st.write(f'✔️ {match_info["室名"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
+        else:
+            st.write(f'❌ {match_info["室名"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
 
     # 結果をまとめてCSVとして出力
-    df_matches = pd.DataFrame(matches)
+    df_matches = pd.DataFrame(approved_matches + pending_matches)
     df_matches.to_csv("matching_results.csv", index=False, encoding='utf-8-sig')
 
     # ステータスによって異なるメッセージを表示
-    if any(match["ステータス"] == "保留" for match in matches):
+    if any(match["ステータス"] == "保留" for match in approved_matches + pending_matches):
         st.warning("⚠️ 類似度が低く保留された室名あり（matching_results.csv を確認）")
     else:
         st.success("🎉 すべての室名が自動マッチされました！")
