@@ -20,10 +20,9 @@ def extract_db_id(notion_url):
 # -------------------------------
 # 🔧 ページネーションでデータを取得
 # -------------------------------
-def get_database_items(db_id):
+def get_database_items(notion, db_id):
     results = []
     try:
-        notion = Client(auth=NOTION_TOKEN)  # notionのクライアントを関数内で初期化
         response = notion.databases.query(database_id=db_id)
         results.extend(response["results"])
 
@@ -42,14 +41,6 @@ def get_database_items(db_id):
         st.error(f"エラーが発生しました: {e}")
         st.write("データベースのURLや接続に問題があるかもしれません。再度確認してください。")
 
-    # ページネーションを考慮して全てのデータを取得
-    while "next_cursor" in response:
-        response = client.databases.query(
-            database_id=db_id,
-            start_cursor=response["next_cursor"]
-        )
-        results.extend(response["results"])
-
     return results
 
 # -------------------------------
@@ -59,8 +50,8 @@ def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
 
     # データベースアイテムをページネーションで取得
-    azs_items = get_database_items(AZS_DB_ID)
-    PJ_items = get_database_items(PJ_DB_ID)
+    azs_items = get_database_items(notion, AZS_DB_ID)
+    PJ_items = get_database_items(notion, PJ_DB_ID)
 
     azs_names = []
     azs_pages = {}
