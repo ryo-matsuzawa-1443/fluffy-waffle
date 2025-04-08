@@ -27,8 +27,11 @@ def get_database_items(db_id):
         response = notion.databases.query(database_id=db_id)
         results.extend(response["results"])
 
+        st.write(f"Initial data fetched: {len(results)} items")
+
         # ページネーション
         while "next_cursor" in response:
+            st.write(f"Fetching next page... {response['next_cursor']}")
             response = notion.databases.query(
                 database_id=db_id,
                 start_cursor=response["next_cursor"]
