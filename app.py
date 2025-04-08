@@ -4,29 +4,32 @@ from sentence_transformers import SentenceTransformer, util
 import pandas as pd
 import os
 import zipfile
+import urllib.request
 
 # -------------------------------
-# 🔧 モデルZipファイルを展開（初回のみ）
+# 🔧 Dropboxからモデルを取得＆展開
 # -------------------------------
+ZIP_URL = "https://www.dropbox.com/scl/fi/izbgbhfai3w9lf9seypre/my_model.zip?rlkey=3w8l307p4xuz1c3oqbcnfxnm8&st=ookby7ig&dl=1"
 ZIP_PATH = "my_model.zip"
 MODEL_DIR = "./my_model"
 
 if not os.path.exists(MODEL_DIR):
-    st.info("🤖 AIモデルを展開中です。少しお待ちください...")
+    st.info("🤖 DropboxからAIモデルを取得中です。少しお待ちください...")
+    urllib.request.urlretrieve(ZIP_URL, ZIP_PATH)
     with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
         zip_ref.extractall(MODEL_DIR)
 
 model = SentenceTransformer(MODEL_DIR)
 
 # -------------------------------
-# 環境変数など設定
+# 🔧 Notionトークンと設定
 # -------------------------------
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
 AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"
 RELATION_PROP_NAME = "AZS DB"
 
 # -------------------------------
-# 🔧 関数：Notion URL → DB ID 抽出
+# 🔧 DB ID 抽出関数
 # -------------------------------
 def extract_db_id(notion_url):
     try:
@@ -35,7 +38,7 @@ def extract_db_id(notion_url):
         return None
 
 # -------------------------------
-# 🔧 関数：全ページ取得（ページネーション対応）
+# 🔧 全ページ取得関数（100件以上対応）
 # -------------------------------
 def get_database_items(notion, db_id):
     results = []
@@ -57,7 +60,7 @@ def get_database_items(notion, db_id):
     return results
 
 # -------------------------------
-# 🔧 関数：AIマッチング処理
+# 🔧 マッチング処理
 # -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
