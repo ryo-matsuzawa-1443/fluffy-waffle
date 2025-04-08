@@ -59,7 +59,7 @@ def run_matching(PJ_DB_ID, threshold):
     for PJ_name in PJ_names:
         best_match, score = process.extractOne(PJ_name, azs_names)
         match_info = {
-            "室名": PJ_name,
+            "Name": PJ_name,
             "マッチした部屋名": best_match,
             "類似度": score,
             "AZSページID": azs_pages[best_match],
@@ -83,9 +83,9 @@ def run_matching(PJ_DB_ID, threshold):
         
         # リアルタイムでマッチング結果を表示
         if score >= threshold:
-            st.write(f'✔️ {match_info["室名"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
+            st.write(f'✔️ {match_info["Name"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
         else:
-            st.write(f'❌ {match_info["室名"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
+            st.write(f'❌ {match_info["Name"]} → {match_info["マッチした部屋名"]}（スコア: {match_info["類似度"]}）')
 
     # 結果をまとめてCSVとして出力
     df_matches = pd.DataFrame(approved_matches + pending_matches)
@@ -93,9 +93,9 @@ def run_matching(PJ_DB_ID, threshold):
 
     # ステータスによって異なるメッセージを表示
     if any(match["ステータス"] == "保留" for match in approved_matches + pending_matches):
-        st.warning("⚠️ 類似度が低く保留された室名あり（matching_results.csv を確認）")
+        st.warning("⚠️ 類似度が低く保留されたNameあり（matching_results.csv を確認）")
     else:
-        st.success("🎉 すべての室名が自動マッチされました！")
+        st.success("🎉 すべてのNameが自動マッチされました！")
 
     # ✅ ダウンロードボタン
     with open("matching_results.csv", "rb") as f:
@@ -109,7 +109,7 @@ def run_matching(PJ_DB_ID, threshold):
 # -------------------------------
 # 🖼️ Streamlit UI部分
 # -------------------------------
-st.title("🏗️ Notion 室名自動マッチングツール")
+st.title("🏗️ Notion Name自動マッチングツール")
 
 url = st.text_input("🔗 PJデータベースのURLを入力してください")
 
