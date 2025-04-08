@@ -44,7 +44,7 @@ def run_matching(PJ_DB_ID, threshold):
     PJ_names = []
     PJ_pages = {}
     for item in PJ_items:
-        name = item["properties"].get("室名", {}).get("title", [])
+        name = item["properties"].get("Name", {}).get("title", [])
         if name:
             text = name[0]["text"]["content"]
             PJ_names.append(text)
