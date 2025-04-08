@@ -20,9 +20,10 @@ def extract_db_id(notion_url):
 # -------------------------------
 # 🔧 ページネーションでデータを取得
 # -------------------------------
-def get_database_items(notion, db_id):
+def get_database_items(db_id):
     results = []
     try:
+        notion = Client(auth=NOTION_TOKEN)  # notionクライアントの定義をここに移動
         response = notion.databases.query(database_id=db_id)
         results.extend(response["results"])
 
@@ -50,8 +51,8 @@ def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
 
     # データベースアイテムをページネーションで取得
-    azs_items = get_database_items(notion, AZS_DB_ID)
-    PJ_items = get_database_items(notion, PJ_DB_ID)
+    azs_items = get_database_items(AZS_DB_ID)
+    PJ_items = get_database_items(PJ_DB_ID)
 
     azs_names = []
     azs_pages = {}
