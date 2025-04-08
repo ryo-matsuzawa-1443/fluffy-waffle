@@ -23,7 +23,7 @@ def extract_db_id(notion_url):
 def get_database_items(db_id):
     results = []
     try:
-        # APIクエリ
+        notion = Client(auth=NOTION_TOKEN)  # notionのクライアントを関数内で初期化
         response = notion.databases.query(database_id=db_id)
         results.extend(response["results"])
 
