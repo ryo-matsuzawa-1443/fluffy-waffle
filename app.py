@@ -9,7 +9,7 @@ import urllib.request
 # -------------------------------
 # ✅ DropboxからモデルDL＆展開
 # -------------------------------
-ZIP_URL = "https://www.dropbox.com/scl/fi/pyyf5a84o5f2a7la0yo6f/my_model.zip?rlkey=ouf19dk7m6fndu0f0wdqdlm58&st=8o7byvxq&dl=1"
+ZIP_URL = "https://www.dropbox.com/scl/fi/y6vuw1w07iaykjz8x3bap/my_model.zip?rlkey=vdkmpp4586n9cch9509jdtmgx&st=x5qdh7cc&dl=1"
 ZIP_PATH = "my_model.zip"
 MODEL_DIR = "./my_model"
 
@@ -28,7 +28,6 @@ NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
 AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"
 RELATION_PROP_NAME = "AZS DB"
 
-# -------------------------------
 def extract_db_id(notion_url):
     try:
         return notion_url.split("/")[-1].split("?")[0]
@@ -52,7 +51,6 @@ def get_database_items(notion, db_id):
 
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
-
     azs_items = get_database_items(notion, AZS_DB_ID)
     PJ_items = get_database_items(notion, PJ_DB_ID)
 
