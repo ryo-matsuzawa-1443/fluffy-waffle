@@ -3,26 +3,30 @@ from notion_client import Client
 from sentence_transformers import SentenceTransformer, util
 import pandas as pd
 import os
+import zipfile
 
+# -------------------------------
+# 🔧 モデルZipファイルを展開（初回のみ）
+# -------------------------------
+ZIP_PATH = "my_model.zip"
+MODEL_DIR = "./my_model"
+
+if not os.path.exists(MODEL_DIR):
+    st.info("🤖 AIモデルを展開中です。少しお待ちください...")
+    with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
+        zip_ref.extractall(MODEL_DIR)
+
+model = SentenceTransformer(MODEL_DIR)
+
+# -------------------------------
+# 環境変数など設定
+# -------------------------------
 NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
 AZS_DB_ID = "02c8dffa2f6e45c1898c36b04503bd23"
 RELATION_PROP_NAME = "AZS DB"
 
 # -------------------------------
-# ✅ モデルの自動ダウンロード＋キャッシュ読み込み
-# -------------------------------
-MODEL_NAME = 'paraphrase-MiniLM-L6-v2'
-MODEL_DIR = './.cache_model'
-
-if not os.path.exists(MODEL_DIR):
-    st.info("🤖 モデルを初回ダウンロード中です。少しお待ちください...")
-    model = SentenceTransformer(MODEL_NAME)
-    model.save(MODEL_DIR)
-else:
-    model = SentenceTransformer(MODEL_DIR)
-
-# -------------------------------
-# 🔧 関数：URLからDB IDを抽出
+# 🔧 関数：Notion URL → DB ID 抽出
 # -------------------------------
 def extract_db_id(notion_url):
     try:
@@ -31,7 +35,7 @@ def extract_db_id(notion_url):
         return None
 
 # -------------------------------
-# 🔧 関数：100件以上取得対応
+# 🔧 関数：全ページ取得（ページネーション対応）
 # -------------------------------
 def get_database_items(notion, db_id):
     results = []
@@ -53,7 +57,7 @@ def get_database_items(notion, db_id):
     return results
 
 # -------------------------------
-# 🔧 関数：マッチング実行
+# 🔧 関数：AIマッチング処理
 # -------------------------------
 def run_matching(PJ_DB_ID, threshold):
     notion = Client(auth=NOTION_TOKEN)
