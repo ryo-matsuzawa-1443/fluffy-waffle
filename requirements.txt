@@ -1,0 +1,5 @@
+streamlit
+notion-client
+fuzzywuzzy
+python-Levenshtein
+pandas

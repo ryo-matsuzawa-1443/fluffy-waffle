@@ -1,0 +1,11 @@
+# Streamlit files
+*.pyc
+__pycache__/
+
+# Output CSV
+approved_matches.csv
+pending_matches.csv
+
+# Secrets
+secrets.toml
+.env
