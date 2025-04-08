@@ -120,4 +120,4 @@ if st.button("🚀 マッチング実行"):
         st.info(f"✅ DB ID 取得: {db_id}")
         run_matching(db_id, threshold)  # ← しきい値も渡す
     else:
-        st.error("❌ 無効なURL形式
+        st.error("❌ 無効なURL形式です。NotionのデータベースURLを確認してください。")
